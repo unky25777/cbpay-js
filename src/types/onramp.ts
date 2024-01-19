@@ -1,28 +1,3 @@
-export type SupportedBlockchains =
-  | 'algorand'
-  | 'avalanche-c-chain'
-  | 'bitcoin'
-  | 'bitcoin-cash'
-  | 'cardano'
-  | 'celo'
-  | 'cosmos'
-  | 'dash'
-  | 'dfinity'
-  | 'dogecoin'
-  | 'eos'
-  | 'ethereum'
-  | 'ethereum-classic'
-  | 'filecoin'
-  | 'flow'
-  | 'horizen'
-  | 'litecoin'
-  | 'optimism'
-  | 'polkadot'
-  | 'solana'
-  | 'stellar'
-  | 'tezos'
-  | 'zcash';
-
 export type DestinationWallet = {
   /* Destination address where the purchased assets will be sent. */
   address: string;
@@ -34,7 +9,9 @@ export type DestinationWallet = {
   supportedNetworks?: string[];
 };
 
-export type OnRampAppParams = {
+export type OnRampExperience = 'buy' | 'send';
+
+type BaseOnRampAppParams = {
   /** The destination wallets supported by your application (BTC, ETH, etc). */
   destinationWallets: DestinationWallet[];
   /** The preset input amount as a crypto value. i.e. 0.1 ETH. This will be the initial default for all cryptocurrencies. */
@@ -47,4 +24,22 @@ export type OnRampAppParams = {
   presetFiatAmount?: number;
   /** The default network that should be selected when multiple networks are present. */
   defaultNetwork?: string;
+  /** The default experience the user should see: either transfer funds from Coinbase (`'send'`) or buy them (`'buy'`). */
+  defaultExperience?: OnRampExperience;
+  handlingRequestedUrls?: boolean;
+  /** ID used to link all user transactions created during the session. */
+  partnerUserId?: string;
 };
+
+export type OnRampAggregatorAppParams = {
+  quoteId: string;
+  defaultAsset: string;
+  defaultNetwork?: string;
+  defaultPaymentMethod: string;
+  presetFiatAmount: number;
+  fiatCurrency: string;
+};
+
+export type OnRampAppParams =
+  | BaseOnRampAppParams
+  | (BaseOnRampAppParams & OnRampAggregatorAppParams);

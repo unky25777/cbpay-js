@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.10.0] - 2024-01-11
+- Add `onrampToken` parameter
+
+## [1.9.0] - 2023-11-07
+- Add `partnerUserId` parameter
+
+## [1.8.0] - 2023-10-12
+- Add support for Aggregator API parameters
+- Remove old SupportedBlockchains type
+  - Hard coding this list into the SDK wasn't ideal
+  - We support the expected set of assets + networks
+  - We're adding an endpoint which lists the currently supported assets + networks.
+
+## [1.7.0] - 2023-05-05
+- Add `defaultExperience` parameter
+- Add `handlingRequestedUrls` parameter and associated `request_open_url` event
+- Add support for several blockchains
+
+## [1.6.0] - 2022-09-13
+- Move internal exports to main export file.
+
+## [1.5.0] - 2022-09-13
+- Update package.json exports format.
+- Improvements to pixel error handling.
+
+## [1.4.0] - 2022-09-06
+- Update exports for core logic.
+
 ## [1.3.0] - 2022-08-25
 - Fix invalid CommonJS output.
 - Fix passing generateOnRampURL experience options.

@@ -26,6 +26,7 @@ export type ExperienceListeners = {
   onExit?: (data?: JsonObject) => void;
   onSuccess?: (data?: JsonObject) => void;
   onEvent?: (event: EventMetadata) => void;
+  onRequestedUrl?: (url: string) => void;
 };
 
 export type CoinbasePixelConstructorParams = {
@@ -64,6 +65,8 @@ export class CoinbasePixel {
   private eventStreamListeners: Partial<Record<EventMetadata['eventName'], (() => void)[]>> = {};
   private unsubs: (() => void)[] = [];
   private appParams: JsonObject;
+  /** This will be called when the pixel successfully initializes to the error listener event. */
+  private removeErrorListener?: () => void;
   /** onReady callback which should be triggered when a nonce has successfully been retrieved */
   private onReadyCallback: CoinbasePixelConstructorParams['onReady'];
   private onFallbackOpen: CoinbasePixelConstructorParams['onFallbackOpen'];
@@ -86,6 +89,7 @@ export class CoinbasePixel {
     this.debug = debug || false;
 
     this.addPixelReadyListener();
+    this.addErrorListener();
     this.embedPixel();
 
     // Handle browsers where we need to request access before embedding.
@@ -233,9 +237,24 @@ export class CoinbasePixel {
         this.log('Received message: pixel_ready');
         this.isLoggedIn = !!data?.isLoggedIn as boolean;
 
+        this.removeErrorListener?.();
         this.sendAppParams(() => {
           this.onReadyCallback?.();
         });
+      },
+    });
+  };
+
+  private addErrorListener = (): void => {
+    this.removeErrorListener = this.onMessage('error', {
+      shouldUnsubscribe: true,
+      onMessage: (data) => {
+        this.log('Received message: error');
+
+        if (data) {
+          const message = typeof data === 'string' ? data : JSON.stringify(data);
+          this.onReadyCallback?.(new Error(message));
+        }
       },
     });
   };
@@ -299,7 +318,12 @@ export class CoinbasePixel {
     }
   };
 
-  private setupExperienceListeners = ({ onSuccess, onExit, onEvent }: ExperienceListeners) => {
+  private setupExperienceListeners = ({
+    onSuccess,
+    onExit,
+    onEvent,
+    onRequestedUrl,
+  }: ExperienceListeners) => {
     this.onMessage('event', {
       shouldUnsubscribe: false,
       onMessage: (data) => {
@@ -312,6 +336,9 @@ export class CoinbasePixel {
         }
         if (metadata.eventName === 'exit') {
           onExit?.(metadata.error);
+        }
+        if (metadata.eventName === 'request_open_url') {
+          onRequestedUrl?.(metadata.url);
         }
         onEvent?.(data as EventMetadata);
       },
@@ -349,12 +376,10 @@ export class CoinbasePixel {
   };
 
   private onMessage = (...args: Parameters<typeof onBroadcastedPostMessage>) => {
-    this.unsubs.push(
-      onBroadcastedPostMessage(args[0], {
-        allowedOrigin: this.host,
-        ...args[1],
-      }),
-    );
+    const unsubFxn = onBroadcastedPostMessage(args[0], { allowedOrigin: this.host, ...args[1] });
+    this.unsubs.push(unsubFxn);
+
+    return unsubFxn;
   };
 
   private log = (...args: Parameters<typeof console.log>) => {
